@@ -1,0 +1,32 @@
+{
+  "name": "Adam Badar",
+  "title": "Founder",
+  "company": "Rosefall",
+  "link": "https://rosefall.ai",
+  "logo": "rosefall-mark.svg",
+  "statement_logo": "rosefall-mark-gradient.svg",
+  "label": "AI search audit",
+  "label_icon": "search",
+  "headline": "Does ChatGPT recommend\nyour firm?",
+  "alt": "Rosefall: ChatGPT names your firm in 30 days, or we pay you.",
+  "gif_url": "https://rosefall.ai/email/rosefall-signature-card.gif",
+  "colors": {
+    "background": "#160C03",
+    "accent": "#FF6B35",
+    "text": "#FCFCF8",
+    "border": "#3A2416",
+    "chip": "#211309",
+    "chip-border": "#4A2E1B",
+    "label": "#EFE7DC",
+    "muted": "#B9A895",
+    "faint": "#6E5E4F",
+    "statement": "#24150A"
+  },
+  "slides": [
+    {"type": "typing", "app": "ChatGPT", "greeting": "What can I help with?", "text": "best personal injury lawyer near me", "seconds": 2.55},
+    {"type": "list", "app": "ChatGPT", "question": "best personal injury lawyer near me", "lead": "Top personal injury lawyers near you:",
+     "items": ["Firm A Injury Law", "Firm B Trial Lawyers", "Firm C Accident Attorneys"], "seconds": 2.55,
+     "overlay": "Is your firm\n*on the list?*", "overlay_seconds": 2.4},
+    {"type": "statement", "text": "ChatGPT names your\nfirm in 30 days,\n*or we pay you.*", "seconds": 2.6}
+  ]
+}

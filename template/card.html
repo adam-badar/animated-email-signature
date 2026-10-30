@@ -1,0 +1,218 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- The animated card. scripts/make_signature.py opens this page, calls build(config), then render(t) for each frame. -->
+<style>
+@font-face{font-family:"Geist";src:url("../fonts/Geist.ttf");font-weight:100 900}
+@font-face{font-family:"GeistMono";src:url("../fonts/GeistMono.ttf");font-weight:100 900}
+@font-face{font-family:"Archivo";src:url("../fonts/Archivo.ttf");font-weight:100 900;font-stretch:62% 125%}
+html,body{margin:0;padding:0;background:transparent}
+*{box-sizing:border-box}
+.card{position:absolute;left:0;top:0;width:520px;height:196px;border-radius:14px;background:var(--card);overflow:hidden;
+  box-shadow:inset 0 0 0 1px var(--border);font-family:"Geist";-webkit-font-smoothing:antialiased}
+.right{position:absolute;left:240px;right:18px;top:0;bottom:0}
+.badge{position:absolute;left:0;top:19px;display:flex;align-items:center;gap:8px}
+.badge .ic{width:21px;height:21px;border-radius:6px;background:var(--chip);box-shadow:inset 0 0 0 1px var(--chip-border);display:flex;align-items:center;justify-content:center}
+.badge .ic img{width:11px;height:11px}
+.badge .lb{font-size:11.5px;font-weight:560;color:var(--label)}
+.head{position:absolute;left:0;top:57px;font-size:20.5px;font-weight:470;line-height:1.2;letter-spacing:-0.012em;color:var(--text)}
+.foot{position:absolute;left:0;right:0;bottom:17px;display:flex;justify-content:space-between;align-items:center;
+  font-family:"GeistMono";font-size:9px;letter-spacing:.18em;color:var(--muted)}
+.tag{display:flex;align-items:center;gap:6px;text-transform:uppercase}
+.tag img{width:11px;height:11px}
+.ctr{color:var(--faint);letter-spacing:.12em}
+.ctr b{color:var(--text);font-weight:500}
+.clip{position:absolute;left:8px;top:8px;width:216px;height:180px;border-radius:9px;overflow:hidden;background:var(--panel)}
+.slide{position:absolute;inset:0;display:none}
+.light{background:var(--panel);color:var(--ink)}
+.app{position:absolute;left:11px;top:9px;font-size:9.5px;font-weight:620;color:var(--ink2)}
+.app i{font-style:normal;color:var(--ink3);font-weight:500;margin-left:2px}
+.greet{position:absolute;left:0;right:0;top:46px;text-align:center;font-size:13px;font-weight:540;letter-spacing:-0.01em;color:var(--ink)}
+.pill{position:absolute;left:11px;right:11px;top:78px;min-height:58px;border-radius:16px;background:#fff;
+  box-shadow:0 0 0 1px var(--hair),0 3px 8px rgba(40,25,10,.07);padding:10px 12px 0 13px}
+.typed{font-size:11.5px;line-height:15px;color:var(--ink);font-weight:430;width:150px}
+.caret{display:inline-block;width:1.2px;height:13px;background:var(--card);vertical-align:-2px;margin-left:1px}
+.send{position:absolute;right:8px;bottom:7px;width:21px;height:21px;border-radius:50%;background:#D8D2CA;display:flex;align-items:center;justify-content:center}
+.bubble{position:absolute;right:10px;top:27px;max-width:150px;background:var(--bubble);border-radius:11px;padding:5px 9px;font-size:9.5px;line-height:12.5px;color:var(--ink)}
+.ans{position:absolute;left:12px;right:12px;top:68px;font-size:10px;line-height:13px;color:var(--ink)}
+.ans .lead{font-weight:430;margin-bottom:7px}
+.ans .row{display:flex;gap:6px;align-items:baseline;margin-bottom:6px;font-size:10.5px}
+.ans .row .n{color:var(--num);font-weight:500;width:9px}
+.ans .row .f{font-weight:640;letter-spacing:-0.005em}
+.ans .rule{height:1px;background:var(--rule);margin:0 0 6px 15px}
+.dim{position:absolute;inset:0;background:var(--card);opacity:0}
+.q{position:absolute;left:14px;right:14px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;opacity:0;
+  font-family:"Archivo";font-stretch:112%;font-weight:760;font-size:19px;line-height:1.12;letter-spacing:-0.01em;color:var(--text)}
+.acc{color:var(--accent)}
+.stmt{background:var(--statement)}
+.stmt .mk{position:absolute;left:14px;top:14px;width:26px;height:26px}
+.stmt .tx{position:absolute;left:14px;right:10px;bottom:15px;font-family:"Archivo";font-stretch:115%;font-weight:800;font-size:15.5px;line-height:1.13;letter-spacing:-0.01em;color:var(--text)}
+.stmt.big .tx{font-size:19px}
+.img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.img .cap{position:absolute;left:10px;right:10px;bottom:10px;font-size:10px;line-height:13px;font-weight:560;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+</style></head>
+<body>
+<div class="card" id="card">
+  <div class="clip" id="clip"></div>
+  <div class="right">
+    <div class="badge" id="badge"><div class="ic" id="icon"></div><div class="lb" id="label"></div></div>
+    <div class="head" id="head"></div>
+    <div class="foot"><div class="tag" id="tag"></div><div class="ctr" id="ctr"></div></div>
+  </div>
+</div>
+<script>
+const WIPE = 0.25;          // seconds for one top-down wipe between slides
+const TYPE_RATE = 25;       // characters per second on a typing slide
+const $ = id => document.getElementById(id);
+const ease = p => p < 0 ? 0 : p > 1 ? 1 : (1 - Math.pow(1 - p, 3));
+const lin = p => p < 0 ? 0 : p > 1 ? 1 : p;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+// "*word*" becomes accent colour, a newline becomes a line break.
+const rich = s => esc(s).replace(/\*([^*]+)\*/g, '<span class="acc">$1</span>').replace(/\n/g, "<br>");
+const ICONS = {
+  search: '<svg width="11" height="11" viewBox="0 0 12 12"><circle cx="5.2" cy="5.2" r="3.6" stroke="ACC" stroke-width="1.5" fill="none"/><path d="M8 8l2.6 2.6" stroke="ACC" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  check: '<svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.4l2.6 2.6L10 3.4" stroke="ACC" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  spark: '<svg width="11" height="11" viewBox="0 0 12 12"><path d="M6 1v3.2M6 7.8V11M1 6h3.2M7.8 6H11" stroke="ACC" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  mail: '<svg width="11" height="11" viewBox="0 0 12 12"><rect x="1.3" y="2.6" width="9.4" height="6.8" rx="1.2" stroke="ACC" stroke-width="1.3" fill="none"/><path d="M1.8 3.3 6 6.4l4.2-3.1" stroke="ACC" stroke-width="1.3" fill="none" stroke-linejoin="round"/></svg>'
+};
+let C, SLIDES = [], TIMELINE = [], STEPS = 0;
+
+function el(html) { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
+
+function makeTyping(s) {
+  const node = el(`<div class="slide light"><div class="app">${esc(s.app || "ChatGPT")} <i>&#8964;</i></div>
+    <div class="greet">${esc(s.greeting || "What can I help with?")}</div>
+    <div class="pill"><div class="typed"><span class="t"></span><span class="caret"></span></div>
+    <div class="send"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M5 8.5V1.8M1.9 4.6 5 1.5l3.1 3.1" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>`);
+  const text = s.text || "", hold = s.seconds;
+  const typeA = 0.25, typeB = typeA + text.length / TYPE_RATE, press = hold - 0.25;
+  const t_ = node.querySelector(".t"), caret = node.querySelector(".caret"), send = node.querySelector(".send");
+  return {node, hold, steps: 1, set(u) {   // u: seconds since the slide finished wiping in (negative during the wipe)
+    const n = Math.round(lin((u - typeA) / (typeB - typeA)) * text.length);
+    t_.textContent = text.slice(0, Math.max(0, n));
+    const blink = (u >= typeA && u < typeB) || (Math.floor(u / 0.5) % 2 === 0);
+    caret.style.visibility = (blink && u < press) ? "visible" : "hidden";
+    send.style.background = n > 0 ? C.colors.card : "#D8D2CA";
+    send.style.transform = (u >= press && u < press + 0.15) ? "scale(.86)" : "none";
+  }, step: () => 0};
+}
+
+function makeList(s) {
+  const items = s.items || [];
+  let rows = "";
+  items.forEach((it, i) => {
+    rows += `<div class="row" data-at="${0.4 + 0.25 * i}"><span class="n">${i + 1}.</span><span class="f">${esc(it)}</span></div>`;
+    if (i < items.length - 1) rows += `<div class="rule" data-at="${0.4 + 0.25 * i}"></div>`;
+  });
+  const node = el(`<div class="slide light"><div class="app">${esc(s.app || "ChatGPT")} <i>&#8964;</i></div>
+    ${s.question ? `<div class="bubble">${esc(s.question)}</div>` : ""}
+    <div class="ans"><div class="lead" data-at="0.1">${esc(s.lead || "")}</div>${rows}</div>
+    ${s.overlay ? `<div class="dim"></div><div class="q"><div>${rich(s.overlay)}</div></div>` : ""}</div>`);
+  const hold = s.seconds, ov = s.overlay ? (s.overlay_seconds || 2.4) : 0;
+  const parts = [...node.querySelectorAll("[data-at]")];
+  const blurred = [node.querySelector(".ans"), node.querySelector(".bubble")].filter(Boolean);
+  const dim = node.querySelector(".dim"), q = node.querySelector(".q");
+  return {node, hold: hold + ov, steps: s.overlay ? 2 : 1, set(u) {
+    for (const p of parts) p.style.opacity = lin((u - parseFloat(p.dataset.at)) / 0.15);
+    if (!s.overlay) return;
+    const d = lin((u - hold) / 0.3);
+    dim.style.opacity = (d * 0.93).toFixed(3);
+    for (const b of blurred) b.style.filter = d > 0 ? `blur(${(d * 1.6).toFixed(2)}px)` : "none";
+    q.style.opacity = lin((u - hold - 0.12) / 0.25);
+    q.style.transform = `translateY(${(1 - ease((u - hold - 0.12) / 0.3)) * 6}px)`;
+  }, step: u => (s.overlay && u >= hold) ? 1 : 0};
+}
+
+function makeStatement(s) {
+  const logo = s.logo === false ? "" : (C.statement_logo || C.logo || "");
+  const node = el(`<div class="slide stmt${s.big ? " big" : ""}">${logo ? `<img class="mk" src="${logo}">` : ""}
+    <div class="tx">${rich(s.text || "")}</div></div>`);
+  return {node, hold: s.seconds, steps: 1, set() {}, step: () => 0};
+}
+
+function makeImage(s) {
+  const node = el(`<div class="slide img"><img src="${s.src}">${s.caption ? `<div class="cap">${rich(s.caption)}</div>` : ""}</div>`);
+  return {node, hold: s.seconds, steps: 1, set() {}, step: () => 0};
+}
+
+const MAKERS = {typing: makeTyping, list: makeList, statement: makeStatement, image: makeImage};
+
+window.build = function (config) {
+  C = config;
+  const r = document.documentElement.style, k = C.colors;
+  for (const [name, v] of Object.entries(k)) r.setProperty("--" + name, v);
+  $("label").textContent = C.label || "";
+  $("badge").style.display = C.label ? "flex" : "none";
+  const icon = C.label_icon || "search";
+  $("icon").innerHTML = icon === "none" ? "" : (ICONS[icon] ? ICONS[icon].replace(/ACC/g, k.accent) : `<img src="${icon}">`);
+  if (icon === "none") $("icon").style.display = "none";
+  $("head").innerHTML = rich(C.headline || "");
+  $("tag").innerHTML = (C.logo ? `<img src="${C.logo}">` : "") + esc(C.company || "");
+  const clip = $("clip");
+  SLIDES = C.slides.map(s => { const m = MAKERS[s.type](s); clip.appendChild(m.node); return m; });
+  // Counter numbers: each slide is one step, a list with an overlay question is two.
+  let n = 0; for (const s of SLIDES) { s.first = n + 1; n += s.steps; } STEPS = n;
+  // Play order. With start_with_last the loop opens on the last slide, so the GIF's first frame (what a client
+  // that doesn't animate GIFs shows) is the closing message.
+  const order = SLIDES.map((_, i) => i);
+  if (C.start_with_last !== false && SLIDES.length > 1) order.unshift(order.pop());
+  TIMELINE = []; let t = 0;
+  order.forEach((i, j) => {
+    if (j > 0) { TIMELINE.push({kind: "wipe", from: order[j - 1], to: i, a: t, b: t + WIPE}); t += WIPE; }
+    TIMELINE.push({kind: "hold", slide: i, a: t, b: t + SLIDES[i].hold, shownAt: t}); t += SLIDES[i].hold;
+  });
+  TIMELINE.push({kind: "wipe", from: order[order.length - 1], to: order[0], a: t, b: t + WIPE, last: true}); t += WIPE;
+  window.DURATION = +t.toFixed(3);
+  render(0);
+  return window.DURATION;
+};
+
+function shownAt(i, t) {  // when slide i finished wiping in, for the play-through that contains t
+  let best = null;
+  for (const seg of TIMELINE) if (seg.kind === "hold" && seg.slide === i && seg.a <= t + 1e-9) best = seg.shownAt;
+  if (best === null) for (const seg of TIMELINE) if (seg.kind === "wipe" && seg.to === i && seg.a <= t) best = seg.b;
+  return best === null ? 0 : best;
+}
+
+function counter(i, u) {
+  const v = SLIDES[i].first + SLIDES[i].step(u), pad = x => String(x).padStart(2, "0");
+  $("ctr").innerHTML = `<b>${pad(v)}</b> / ${pad(STEPS)}`;
+}
+
+// Text that doesn't fit, as messages for the script to print.
+window.overflow = function () {
+  const out = [], card = $("card").getBoundingClientRect();
+  if ($("head").offsetHeight > 75) out.push("The headline runs past three lines. Shorten it.");
+  const clip = $("clip").getBoundingClientRect();
+  SLIDES.forEach((s, i) => {
+    s.node.style.display = "block"; s.node.style.clipPath = "none";
+    const tx = s.node.querySelector(".tx"), mk = s.node.querySelector(".mk");
+    if (tx && tx.getBoundingClientRect().top < clip.top + (mk ? 44 : 8)) out.push(`Slide ${i + 1}: the text is too long for the card.`);
+    const ans = s.node.querySelector(".ans");
+    if (ans && ans.getBoundingClientRect().bottom > clip.bottom - 4) out.push(`Slide ${i + 1}: the list is too long. Use three short items.`);
+    const q = s.node.querySelector(".q > div");
+    if (q && q.getBoundingClientRect().height > clip.height - 16) out.push(`Slide ${i + 1}: the overlay question is too long.`);
+    s.node.style.display = "none";
+  });
+  if ($("tag").getBoundingClientRect().right > $("ctr").getBoundingClientRect().left - 8) out.push("The company name is too long for the card's footer.");
+  render(0);
+  return out;
+};
+
+window.render = function (t) {
+  for (const s of SLIDES) { s.node.style.display = "none"; s.node.style.clipPath = "none"; s.node.style.zIndex = 0; }
+  const seg = TIMELINE.find(x => t >= x.a && t < x.b) || TIMELINE[TIMELINE.length - 1];
+  if (seg.kind === "hold") {
+    const s = SLIDES[seg.slide], u = t - seg.shownAt;
+    s.node.style.display = "block"; s.set(u); counter(seg.slide, u);
+    return;
+  }
+  const from = SLIDES[seg.from], to = SLIDES[seg.to];
+  const fromShown = shownAt(seg.from, seg.a);
+  from.node.style.display = "block"; from.node.style.zIndex = 1; from.set(t - fromShown);
+  to.node.style.display = "block"; to.node.style.zIndex = 2; to.set(t - seg.b);
+  const e = ease((t - seg.a) / WIPE);
+  to.node.style.clipPath = `inset(0 0 ${(1 - e) * 100}% 0)`;
+  counter(seg.to, -1);
+};
+</script>
+</body></html>

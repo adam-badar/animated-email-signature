@@ -6,7 +6,7 @@ A Claude Code skill that makes an animated email signature: a looping GIF card u
 
 This is the signature on our emails at [Rosefall](https://rosefall.ai). The GIF is 168 KB and loops every 10.85 seconds.
 
-The idea and the layout come from [Daniel Heinen](https://x.com/heinenbros), who made the first one for Graylark and [showed it here](https://x.com/heinenbros/status/2115568642243039495). Credit to him.
+The idea and the layout come from [Daniel Heinen](https://x.com/heinenbros), who made one for Graylark and [showed it here](https://x.com/heinenbros/status/2115568642243039495). Credit to him.
 
 ## What you need
 
